@@ -58,6 +58,11 @@ nav button{
     cursor: pointer;
 }
 
+body .forkongithub a {
+    color: #fff;
+    text-decoration: none;
+}
+
 .forkongithub a {
     background: #000;
     color: #fff;
