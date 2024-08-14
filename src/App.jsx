@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import ethereumTokens from './token/ethereum.json';
-import arbitrumTokens from './token/arbitrum.json';
-import optimismTokens from './token/optimism.json';
-import bscTokens from './token/bsc.json';
 import placeholderToken from './assets/question-mark.png';
 
-const tokens = {
-  Ethereum: ethereumTokens,
-  Arbitrum: arbitrumTokens,
-  Optimism: optimismTokens,
-  Bsc: bscTokens,
+const tokensULR = {
+  Ethereum: 'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/ethereum.json',
+  Arbitrum: 'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/arbitrum.json',
+  Optimism: 'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/optimism.json',
+  Bsc: 'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/bsc.json',
 };
 
 const Loading = () => {
@@ -20,42 +16,54 @@ const Loading = () => {
 function App() {
   const [category, setCategory] = useState('Ethereum');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tokens, setTokens] = useState([]);
   const [errorTokens, setErrorTokens] = useState([]);
-  const [filteredTokens, setFilteredTokens] = useState(tokens[category] || []);
+  const [filteredTokens, setFilteredTokens] = useState([]);
   const [message, setMessage] = useState('');
   const [isLoading, setLoading] = useState(true);
   const [loadedTokens, setLoadedTokens] = useState([]);
+  const [hoveredToken, setHoveredToken] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    setLoadedTokens([]);
-    setFilteredTokens(tokens[category]);
-    setMessage('');
-    setTimeout(() => {
-      setLoading(false); // Đặt lại isLoading thành false sau khi tải xong
-    }, 1000);
+    const fetchTokens = async () => {
+      setLoading(true);
+      setLoadedTokens([]);
+      setMessage('');
+
+      try {
+        const response = await fetch(tokensULR[category]);
+        const data = await response.json();
+        setTokens(data);
+        setFilteredTokens(data);
+      } catch (error) {
+        setMessage('Failed to load tokens');
+      }
+
+      setLoading(false);
+    };
+
+    fetchTokens();
   }, [category]);
 
   const handleClick = (newcategory) => {
     setCategory(newcategory);
     setSearchTerm('');
-    setFilteredTokens(tokens[newcategory]);
-    setMessage('');
   };
 
   const handleSearch = () => {
     setLoading(true);
     setTimeout(() => {
       if (searchTerm) {
-        const searchResults = tokens[category].filter(
+        const searchResults = tokens.filter(
           (token) =>
             token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            token.name.toLowerCase().includes(searchTerm.toLowerCase())
+            token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            token.address.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredTokens(searchResults);
         setMessage(searchResults.length ? '' : 'No Tokens Found');
       } else {
-        setFilteredTokens(tokens[category]);
+        setFilteredTokens(tokens);
         setMessage('');
       }
       setLoading(false);
@@ -69,6 +77,14 @@ function App() {
   const handleTokenError = (index) => {
     setErrorTokens((prev) => [...prev, index]);
     handleTokenLoad(index);
+  };
+
+  const handleMouseEnter = (token) => {
+    setHoveredToken(token);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredToken(null);
   };
 
   const handleKeyDown = (event) => {
@@ -111,17 +127,29 @@ function App() {
             ? Array.from({ length: 8 }).map((_, index) => <Loading key={index} />)
             : filteredTokens.length > 0
               ? filteredTokens.map((token, index) => (
-                <img
+                <div
                   key={index}
-                  src={token.logoURI}
-                  alt={`${category} ${token.name}`}
-                  className={`token-container ${loadedTokens.includes(index) || errorTokens.includes(index) ? 'loaded' : ''}`}
-                  onLoad={() => handleTokenLoad(index)}
-                  onError={(e) => {
-                    e.target.src = placeholderToken;
-                    handleTokenError(index);  // Gọi handleTokenError khi gặp lỗi
-                  }}
-                />
+                  className="token-container"
+                  onMouseEnter={() => handleMouseEnter(token)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <img
+                    src={token.logoURI}
+                    alt={`${category} ${token.name}`}
+                    className={loadedTokens.includes(index) || errorTokens.includes(index) ? 'loaded' : ''}
+                    onLoad={() => handleTokenLoad(index)}
+                    onError={(e) => {
+                      e.target.src = placeholderToken;
+                      handleTokenError(index);
+                    }}
+                  />
+                  {hoveredToken === token && (
+                    <div className="token-info">
+                      <p><strong>Name:</strong> {token.name}</p>
+                      <p><strong>Logo URI:</strong> <a href={token.logoURI} target="_blank" rel="noopener noreferrer">Open Image</a></p>
+                    </div>
+                  )}
+                </div>
               ))
               : null}
         </div>

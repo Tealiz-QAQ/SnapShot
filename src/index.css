@@ -1,5 +1,6 @@
 body {
     margin: 0;
+    padding-bottom: 30px;
     font-family: "Josefin Sans", Helvetica, Arial, sans-serif;
     text-align: center;
     color: #3f4850;
@@ -186,6 +187,41 @@ h2 {
     100% {
         background-color: #e0e0e0;
     }
+}
+
+.token-container {
+    position: relative;
+    display: inline-block;
+    margin: 10px;
+}
+
+.token-info {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    z-index: 10;
+    display: none;
+}
+
+.token-container:hover .token-info {
+    display: block;
+}
+
+.token-info a {
+    color: #FFD700;
+    /* Màu vàng cho liên kết */
+    text-decoration: none;
+}
+
+.token-info a:hover {
+    text-decoration: underline;
 }
 
 @media screen and (min-width: 800px) {
